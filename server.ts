@@ -38,6 +38,15 @@ async function startServer() {
 
   // Periodically broadcast player positions and state updates (25Hz / matching physical 40ms scale)
   setInterval(() => {
+    // Clean up disconnected players based on lastSeen timestamp (timeout after 5 seconds of silence)
+    const now = Date.now();
+    for (const username of Object.keys(activePlayers)) {
+      if (now - activePlayers[username].lastSeen > 5000) {
+        delete activePlayers[username];
+        console.log(`[SERVER] Cleaned up stuck player: ${username}`);
+      }
+    }
+
     if (Object.keys(activePlayers).length > 0) {
       broadcast(wss, {
         type: "state",

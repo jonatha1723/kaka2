@@ -1,6 +1,6 @@
 {
-  "name": "",
-  "description": "",
+  "name": "Tela Branca",
+  "description": "A minimalist white screen.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

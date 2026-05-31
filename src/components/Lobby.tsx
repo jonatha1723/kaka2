@@ -13,6 +13,25 @@ export default function Lobby({ username, onPlay, onLogout }: LobbyProps) {
   const [activeTab, setActiveTab] = useState<'play' | 'social'>('play');
   const [isMobile, setIsMobile] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [onlinePlayers, setOnlinePlayers] = useState<number>(0);
+
+  // Fetch online players count
+  useEffect(() => {
+    const fetchHealth = async () => {
+      try {
+        const res = await fetch('/api/health');
+        if (res.ok) {
+          const data = await res.json();
+          setOnlinePlayers(data.onlinePlayers);
+        }
+      } catch (err) {
+        // ignore
+      }
+    };
+    fetchHealth();
+    const interval = setInterval(fetchHealth, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Detecta se é celular/dispositivo móvel de forma robusta
   useEffect(() => {
@@ -53,8 +72,9 @@ export default function Lobby({ username, onPlay, onLogout }: LobbyProps) {
       
       {/* Side Navigation (Apenas para Tablet e Computador) - md e acima */}
       <div className="hidden md:flex w-64 border-r border-white/5 bg-[#07070a] flex-col pt-8 pb-6 transition-all duration-300">
-        <div className="px-6 mb-10">
-          <h1 className="font-black tracking-tighter text-2xl bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">BLOXORBINS</h1>
+        <div className="px-6 mb-10 flex flex-col items-center">
+          <h1 className="font-black tracking-tighter text-2xl bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent mb-1">BLOXORBINS</h1>
+          <span className="text-xs font-bold text-neutral-500 bg-neutral-900/80 px-2 py-0.5 rounded-md">👥 {onlinePlayers} Jogadores online</span>
         </div>
 
         <nav className="flex-1 px-4 space-y-3">
@@ -97,27 +117,34 @@ export default function Lobby({ username, onPlay, onLogout }: LobbyProps) {
         
         {/* Header no Celular (Boas-vindas, Logout e Botão de Fullscreen EXCLUSIVO para mobile) */}
         <div className="relative z-10 flex items-center justify-between gap-4 mb-6 bg-neutral-900/50 p-4 rounded-3xl border border-white/5 backdrop-blur-md md:hidden">
-          <div className="flex items-center space-x-3 overflow-hidden">
-            <div className="min-w-9 min-h-9 bg-neutral-800 rounded-xl flex items-center justify-center font-black text-neutral-400 uppercase">{username[0]}</div>
-            <div className="flex flex-col overflow-hidden">
-              <span className="text-[9px] font-black text-neutral-500 uppercase tracking-widest leading-none">Jogador</span>
-              <span className="font-bold text-sm truncate max-w-[110px]">{username}</span>
-            </div>
-          </div>
+          <div className="flex flex-col space-y-2 w-full">
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center space-x-3 overflow-hidden">
+                <div className="min-w-9 min-h-9 bg-neutral-800 rounded-xl flex items-center justify-center font-black text-neutral-400 uppercase">{username[0]}</div>
+                <div className="flex flex-col overflow-hidden">
+                  <span className="text-[9px] font-black text-neutral-500 uppercase tracking-widest leading-none">Jogador</span>
+                  <span className="font-bold text-sm truncate max-w-[110px]">{username}</span>
+                </div>
+              </div>
 
-          <div className="flex items-center space-x-2">
-            {isMobile && (
-              <button 
-                onClick={toggleFullscreen} 
-                className="p-3 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs flex items-center gap-2 transition-all cursor-pointer shadow-[0_0_15px_rgba(59,130,246,0.3)] active:scale-95"
-              >
-                {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-                <span>{isFullscreen ? "Sair" : "TELA CHEIA"}</span>
-              </button>
-            )}
-            <button onClick={onLogout} className="p-3 rounded-2xl bg-white/5 hover:bg-red-500/20 hover:text-red-400 text-neutral-400 transition-all cursor-pointer" title="Sair do Jogo">
-              <LogOut size={16} />
-            </button>
+              <div className="flex items-center space-x-2">
+                {isMobile && (
+                  <button 
+                    onClick={toggleFullscreen} 
+                    className="p-3 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs flex items-center gap-2 transition-all cursor-pointer shadow-[0_0_15px_rgba(59,130,246,0.3)] active:scale-95"
+                  >
+                    {isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+                    <span className="hidden sm:inline">{isFullscreen ? "Sair" : "TELA CHEIA"}</span>
+                  </button>
+                )}
+                <button onClick={onLogout} className="p-3 rounded-2xl bg-white/5 hover:bg-red-500/20 hover:text-red-400 text-neutral-400 transition-all cursor-pointer" title="Sair do Jogo">
+                  <LogOut size={16} />
+                </button>
+              </div>
+            </div>
+            <div className="w-full flex items-center justify-center bg-neutral-800/50 py-1.5 rounded-lg border border-white/5">
+              <span className="text-xs font-bold text-neutral-400">👥 {onlinePlayers} Jogadores online no momento</span>
+            </div>
           </div>
         </div>
 

@@ -1,55 +1,71 @@
 import * as THREE from 'three';
-import { generatedVoxelData, VOXEL_SIZE, COLORS } from '../../world/voxelMap';
+import { voxelGrid, colorNames, COLORS, VOXEL_SIZE, GRID_SIZE, HALF_GRID, Y_OFFSET, Y_SIZE } from '../../world/voxelMap';
 
-export function buildObbyWorldMap(scene: THREE.Scene, mapGroup: THREE.Group) {
-  const materials: Record<string, THREE.MeshStandardMaterial> = {};
+export async function buildObbyWorldMap(scene: THREE.Scene, mapGroup: THREE.Group) {
+  const materials: Record<string, THREE.MeshLambertMaterial> = {};
   
   // Pre-create materials based on our colors mapping
   for (const [name, hex] of Object.entries(COLORS)) {
-    materials[name] = new THREE.MeshStandardMaterial({
+    materials[name] = new THREE.MeshLambertMaterial({
       color: hex,
-      roughness: 0.8,
-      metalness: 0.1
     });
   }
 
   const geometry = new THREE.BoxGeometry(VOXEL_SIZE, VOXEL_SIZE, VOXEL_SIZE);
+  
+  // First, group coordinates by color to properly size each InstancedMesh
+  const colorPositions = new Map<number, number[]>();
+  for (let i = 0; i < colorNames.length; i++) {
+    colorPositions.set(i + 1, []);
+  }
 
-  // Group voxels by color so we can create one InstancedMesh per color
-  const voxelsByColor = new Map<string, typeof generatedVoxelData>();
-  for (const v of generatedVoxelData) {
-    if (!voxelsByColor.has(v.colorName)) {
-      voxelsByColor.set(v.colorName, []);
+  for (let gy = 0; gy < Y_SIZE; gy++) {
+    for (let gx = 0; gx < GRID_SIZE; gx++) {
+      for (let gz = 0; gz < GRID_SIZE; gz++) {
+        const index = gx + gy * GRID_SIZE + gz * GRID_SIZE * Y_SIZE;
+        const val = voxelGrid[index];
+        if (val > 0) {
+          const arr = colorPositions.get(val);
+          if (arr) {
+            arr.push(gx - HALF_GRID, gy - Y_OFFSET, gz - HALF_GRID);
+          }
+        }
+      }
     }
-    voxelsByColor.get(v.colorName)!.push(v);
   }
 
   const dummy = new THREE.Object3D();
 
-  for (const [colorName, voxels] of voxelsByColor) {
-    const instancedMesh = new THREE.InstancedMesh(geometry, materials[colorName], voxels.length);
-    instancedMesh.castShadow = true;
-    instancedMesh.receiveShadow = true;
+  for (let colorId = 1; colorId <= colorNames.length; colorId++) {
+    const positions = colorPositions.get(colorId)!;
+    if (positions.length === 0) continue;
 
-    // Water shouldn't cast shadow
+    const colorName = colorNames[colorId - 1];
+    const instancedMesh = new THREE.InstancedMesh(geometry, materials[colorName], positions.length / 3);
+    instancedMesh.castShadow = false;
+    instancedMesh.receiveShadow = false;
+
+    // Water transparency
     if (colorName === 'water' || colorName === 'waterLight') {
       instancedMesh.castShadow = false;
       materials[colorName].transparent = true;
       materials[colorName].opacity = 0.8;
-      materials[colorName].roughness = 0.2;
     }
 
-    for (let i = 0; i < voxels.length; i++) {
-        const v = voxels[i];
+    let instanceId = 0;
+    for (let i = 0; i < positions.length; i += 3) {
+        const x = positions[i];
+        const y = positions[i+1];
+        const z = positions[i+2];
         
         // Scale the grid coordinates to actual 3D space
-        const worldX = v.x * VOXEL_SIZE;
-        const worldY = v.y * VOXEL_SIZE;
-        const worldZ = v.z * VOXEL_SIZE;
+        const worldX = x * VOXEL_SIZE;
+        const worldY = y * VOXEL_SIZE;
+        const worldZ = z * VOXEL_SIZE;
 
         dummy.position.set(worldX, worldY, worldZ);
         dummy.updateMatrix();
-        instancedMesh.setMatrixAt(i, dummy.matrix);
+        instancedMesh.setMatrixAt(instanceId++, dummy.matrix);
     }
     
     instancedMesh.instanceMatrix.needsUpdate = true;

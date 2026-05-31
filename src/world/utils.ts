@@ -1,4 +1,4 @@
-import { VOXEL_SIZE, GRID_SIZE, heightMap } from './voxelMap';
+import { VOXEL_SIZE, GRID_SIZE, heightMap, HALF_GRID } from './voxelMap';
 
 export function getBlockingWallHeight(px: number, py: number, radius: number = 10): number {
   const minVx = Math.floor((px - radius) / VOXEL_SIZE);
@@ -25,9 +25,14 @@ export function getBlockingWallHeight(px: number, py: number, radius: number = 1
         const distSq = dx * dx + dz * dz;
 
         if (distSq <= radius * radius) {
-          const mapKey = `${vx},${vz}`;
-          let h = heightMap.get(mapKey) ?? -999;
-          if (h !== -999) {
+          const gx = vx + HALF_GRID;
+          const gz = vz + HALF_GRID;
+          let h = -999;
+          if (gx >= 0 && gx < GRID_SIZE && gz >= 0 && gz < GRID_SIZE) {
+            h = heightMap[gx + gz * GRID_SIZE];
+          }
+
+          if (h !== -9999 && h !== -999) {
             h = h * VOXEL_SIZE + (VOXEL_SIZE / 2); // world height
             if (h > maxFoundHeight) {
               maxFoundHeight = h;
@@ -47,9 +52,6 @@ export function getStandableFloorState(px: number, py: number, pz: number, radiu
   const maxVz = Math.floor((py + radius) / VOXEL_SIZE);
 
   let bestFloorHeight = -999;
-  
-  // tileType was used to detect hazards, sky islands, etc.
-  // 1 is safe ground, 3 is hazard lava (which we removed), so we will just return 1 if we found ground.
   let bestTileType = 0;
 
   for (let vz = minVz; vz <= maxVz; vz++) {
@@ -69,10 +71,14 @@ export function getStandableFloorState(px: number, py: number, pz: number, radiu
         const distSq = dx * dx + dz * dz;
 
         if (distSq <= radius * radius) {
-          const mapKey = `${vx},${vz}`;
-          let h = heightMap.get(mapKey) ?? -999;
+          const gx = vx + HALF_GRID;
+          const gz = vz + HALF_GRID;
+          let h = -999;
+          if (gx >= 0 && gx < GRID_SIZE && gz >= 0 && gz < GRID_SIZE) {
+            h = heightMap[gx + gz * GRID_SIZE];
+          }
           
-          if (h !== -999) {
+          if (h !== -9999 && h !== -999) {
             // Convert to world height coordinates
             h = h * VOXEL_SIZE + (VOXEL_SIZE / 2);
             if (h <= pz + 8.5) {
@@ -85,13 +91,6 @@ export function getStandableFloorState(px: number, py: number, pz: number, radiu
         }
       }
     }
-  }
-
-  // Water level is basically slightly under 0
-  if (bestFloorHeight === -999 && pz > -10) {
-    // maybe underwater? If they hit the 'water' block bounding box
-    // Voxel height of water is -1, so world height is -1*VOXEL_SIZE
-    // We can also let them fall or 'swim' if needed, but since safe tile=1, maybe we just don't stand on water and fall until resetting
   }
 
   return { floorHeight: bestFloorHeight, tileType: bestTileType };

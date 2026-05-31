@@ -12,10 +12,10 @@ export interface SpawnParams {
 }
 
 export function getSpawnParams(): SpawnParams {
-  // Center of the new Voxel Pagoda map is at 0,0. Drop them near the pagoda path!
+  // Center of the map
   return {
     x: 0,
     y: 0,
-    z: 120 // Drop from sky
+    z: 40
   };
 }

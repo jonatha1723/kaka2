@@ -69,7 +69,7 @@ export function useGameRenderer(
             labelsRef.current[id] = el;
           }
           const c = engine.getScreenCoordinates(id);
-          if (c) { el.style.left = `${c.x}px`; el.style.top = `${c.y}px`; el.style.opacity = "1"; const n = el.querySelector(`#n-${id}`); if (n) n.textContent = p.username; } else { el.style.opacity = "0"; }
+          if (c) { el.style.left = `${c.x}px`; el.style.top = `${c.y}px`; el.style.opacity = "1"; const n = el.firstChild; if (n) (n as HTMLDivElement).textContent = p.username; } else { el.style.opacity = "0"; }
         });
       }
       animFrame = requestAnimationFrame(render);

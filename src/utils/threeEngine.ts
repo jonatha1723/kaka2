@@ -68,34 +68,21 @@ export class ThreeGameEngine {
     // 3. Setup WebGL Renderer with High-Fidelity Soft Shadows
     this.renderer = new THREE.WebGLRenderer({
       canvas: this.canvas,
-      antialias: true,
+      antialias: false,
       alpha: false,
       powerPreference: 'high-performance',
     });
     this.renderer.setSize(width, height);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFShadowMap;
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    this.renderer.shadowMap.enabled = false;
 
     // 4. Setup Lighting
-    this.ambientLight = new THREE.AmbientLight('#ffffff', 0.75); // bright neutral daylight ambient
+    this.ambientLight = new THREE.AmbientLight('#ffffff', 0.85); // bright neutral daylight ambient
     this.scene.add(this.ambientLight);
 
-    this.dirLight = new THREE.DirectionalLight('#fffaed', 1.8); // strong warm sun light
+    this.dirLight = new THREE.DirectionalLight('#fffaed', 1.2); // strong warm sun light
     this.dirLight.position.set(300, 600, 150);
-    this.dirLight.castShadow = true;
-    this.dirLight.shadow.mapSize.width = 2048; // Increased resolution for sharp voxel shadows
-    this.dirLight.shadow.mapSize.height = 2048;
-    this.dirLight.shadow.camera.near = 10;
-    this.dirLight.shadow.camera.far = 1500;
-    
-    // Ambient box for mapping shadows over the active challenge zone
-    const shadowR = 500;
-    this.dirLight.shadow.camera.left = -shadowR;
-    this.dirLight.shadow.camera.right = shadowR;
-    this.dirLight.shadow.camera.top = shadowR;
-    this.dirLight.shadow.camera.bottom = -shadowR;
-    this.dirLight.shadow.bias = -0.0003;
+    this.dirLight.castShadow = false;
     this.scene.add(this.dirLight);
 
     // Subtle atmospheric floor grid styled with soft day-sky pigments in the infinite void
@@ -142,10 +129,8 @@ export class ThreeGameEngine {
       if (!gem) {
         // Construct a glowing octahedron gemstone mesh
         const geom = new THREE.OctahedronGeometry(6, 0);
-        const mat = new THREE.MeshStandardMaterial({
+        const mat = new THREE.MeshLambertMaterial({
           color: orb.color || '#fbbf24',
-          metalness: 0.1,
-          roughness: 0.2,
           emissive: orb.color || '#fbbf24',
           emissiveIntensity: 0.7,
         });
