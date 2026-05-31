@@ -1,0 +1,6 @@
+{
+  "name": "Roblox 3D Open World",
+  "description": "Multiplayer 3D open-world obby with gravity engine, floating collectibles, chat integration, and orbit camera controls.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
